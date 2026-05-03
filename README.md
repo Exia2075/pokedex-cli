@@ -1,66 +1,74 @@
 # pokedexcli
 
-**pokedexcli** is a Go command-line program that lets you explore a retro-style Pokémon world. You can move around a map, discover wild Pokémon, attempt to catch them, inspect their stats, and view your growing Pokédex all from the terminal.
+A retro-style Pokemon command-line explorer written in Go. It uses the PokeAPI to let you browse areas, discover wild Pokemon, catch them with different ball types, inspect their stats, and build a persistent Pokedex across sessions.
 
 ---
 
 ## Motivation
 
-The goal of pokedexcli is to provide a fun and lightweight project for practicing Go and CLI design. This project effectively teaches how to implement and use an efficient in-memory cache to reduce repeated API calls. Along the way, it serves as an introduction to:
+Imagine you want to build a small terminal game that still feels interactive and stateful. You could make a very simple CLI that only fetches and prints Pokemon data on demand:
 
-- Building command-line interfaces in Go
+```go
+pokemon := fetchPokemon("pikachu")
+fmt.Println(pokemon.Name)
+fmt.Println(pokemon.Types)
+```
 
-- Working with APIs and parsing JSON
+That works, but it feels more like an API viewer than a world you can play in. There is no sense of exploration, no memory between runs, and no reason to think strategically about encounters. 
 
-- Implementing TTL - based caching
+`pokedexcli` solves this by turning PokeAPI data into a lightweight gameplay loop. Instead of only looking up Pokemon directly, you can explore areas, roll random encounters, choose different ball types when catching, and save your progress to disk:
 
-- Structs, maps, and modular Go project structure. 
+```go
+areas := listLocationAreas()
+explore("kanto-route-2")
+wild := randomEncounter()
+fmt.Printf("A wild %s appeared!\n", wild.Name)
 
-- Error handling and clean code practices.
+caught := catchPokemon(wild.Name, "great-ball")
+if caught {
+	savePokedex()
+}
+```
+
+This keeps the project fun while also demonstrating practical Go concepts like API integration, caching, modular design, persistence, testing, and command-driven program flow.
 
 --- 
 
-## 🚀 Quick Start
+## Installation
 
-Clone the repository:
+Inside your terminal:
 
 ```bash
 git clone https://github.com/Exia2075/pokedexcli
 cd pokedexcli
-```
-
-Run pokedexcli:
-
-```bash
-go run main.go
+go run .
 ```
 
 ---
 
-## 🚀 Usage
+## Usage
 
-- map: Display the world map and your current location
+Available commands include:
 
-- catch: Attempt to catch a discovered Pokémon
+- `help`: Show all supported commands
+- `map`: Show the next page of location areas
+- `mapb`: Show the previous page of location areas
+- `explore <location-area-name>`: Explore an area and refresh its encounter pool
+- `encounter`: Roll a random wild Pokemon from the last explored area
+- `balls`: Show available ball types and their catch bonuses
+- `catch <pokemon-name> [ball-name]`: Try to catch a Pokemon
+- `inspect <pokemon-name>`: View details for a caught Pokemon
+- `pokedex`: Show all caught Pokemon
+- `exit`: Quit the program
 
-- inspect <name>: View stats of a Pokemon you've caught
-
-- pokedex: Show your collected Pokémon
-
-- exit: Quit the program
-
----
-
-## 🧑‍💻 Author
-
-Exia2075
-
-GitHub: https://github.com/Exia2075/pokedex-cli
+The CLI also stores your progress locally, so your Pokedex and last encounter pool remain available between sessions.
 
 ---
 
-## 👏 Contributing
+## Contributing
 
-I would love your help! Contribute by forking the repo and opening pull requests. Please ensure that your code passes the existing tests and linting, and write tests to test your changes if applicable.
+I love help! Contribute by forking the repo and opening pull requests.
+
+Please make sure your changes pass existing tests, and add tests for new behavior when appropriate.
 
 All pull requests should be submitted to the `main` branch.
