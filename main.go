@@ -6,142 +6,40 @@ import (
 	"os"
 )
 
-type cliCommand struct {
-	name        string
-	description string
-	callback    func(*Config, []string) error
-}
-
-type Stat struct {
-	Name  string
-	Value int
-}
-
-type Pokemon struct {
-	Name           string
-	BaseExperience int
-	Height         int
-	Weight         int
-	Stats          []Stat
-	Types          []string
-}
-
-type Config struct {
-	Next     *string
-	Previous *string
-	Pokedex  map[string]Pokemon
-}
-
-func ptr(s string) *string {
-	return &s
-}
-
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
-
-	config := &Config{
-		Next:     ptr("https://pokeapi.co/api/v2/location-area?limit=20"),
-		Previous: nil,
-		Pokedex:  make(map[string]Pokemon),
+	cfg, err := newConfig("", nil, os.Stdout, nil)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error starting Pokedex:", err)
+		os.Exit(1)
 	}
 
+	scanner := bufio.NewScanner(os.Stdin)
 	commands := getCommands()
 
 	for {
-		fmt.Print("Pokedex > ")
+		fmt.Fprint(cfg.Output, "Pokedex > ")
 
 		if !scanner.Scan() {
 			break
 		}
 
-		input := scanner.Text()
-		words := cleanInput(input)
-
+		words := cleanInput(scanner.Text())
 		if len(words) == 0 {
 			continue
 		}
 
-		commandName := words[0]
-
-		command, exists := commands[commandName]
+		command, exists := commands[words[0]]
 		if !exists {
-			fmt.Println("Unknown command")
+			cfg.println("Unknown command")
 			continue
 		}
 
-		err := command.callback(config, words)
-		if err != nil {
-			fmt.Println("Error: ", err)
-		}
-
-		if err := scanner.Err(); err != nil {
-			fmt.Fprintln(os.Stderr, "Error reading input:", err)
-			break
+		if err := command.callback(cfg, words); err != nil {
+			cfg.println("Error:", err)
 		}
 	}
-}
 
-func getCommands() map[string]cliCommand {
-	return map[string]cliCommand{
-		"help": {
-			name:        "help",
-			description: "Displays a help message",
-			callback:    commandHelp,
-		},
-		"exit": {
-			name:        "exit",
-			description: "Exit the Pokedex",
-			callback:    commandExit,
-		},
-		"map": {
-			name:        "map",
-			description: "Show the next 20 location areas",
-			callback:    commandMap,
-		},
-		"mapb": {
-			name:        "mapb",
-			description: "Show the previous 20 location areas",
-			callback:    commandMapBack,
-		},
-		"explore": {
-			name:        "explore <location-area-name>",
-			description: "List all Pokémon in a location area",
-			callback:    commandExplore,
-		},
-		"catch": {
-			name:        "catch <pokemon-name>",
-			description: "Attempt to catch a Pokémon",
-			callback:    commandCatch,
-		},
-		"inspect": {
-			name:        "inspect <pokemon-name>",
-			description: "View details of a Pokémon you've caught",
-			callback:    commandInspect,
-		},
-		"pokedex": {
-			name:        "pokedex",
-			description: "Show all Pokémon you've caught",
-			callback:    commandPokedex,
-		},
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "Error reading input:", err)
 	}
-}
-
-func commandExit(cfg *Config, words []string) error {
-	fmt.Println("Closing the Pokedex... Goodbye!")
-	os.Exit(0)
-	return nil
-}
-
-func commandHelp(cfg *Config, words []string) error {
-	fmt.Println("Welcome to the Pokedex!")
-	fmt.Println("Usage:")
-	fmt.Println()
-
-	commands := getCommands()
-	for _, cmd := range commands {
-		fmt.Printf("%s: %s\n", cmd.name, cmd.description)
-	}
-	fmt.Println()
-
-	return nil
 }
